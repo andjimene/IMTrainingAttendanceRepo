@@ -1,10 +1,16 @@
 using IMTrainingAttendance.Components;
+using IMTrainingAttendance.Context;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+
+builder.Services.AddDbContext<ApplicationContext>(
+    options => options
+    .UseSqlServer("Server=MAINDESKTOP\\SQLEXPRESS;Database=TrainingAttendanceDb;Trusted_Connection=True;Encrypt=false;TrustServerCertificate=true"));
 
 var app = builder.Build();
 

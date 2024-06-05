@@ -1,12 +1,133 @@
 ﻿@page "/instructor"
 @rendermode InteractiveServer
+@using IMTrainingAttendance.Context
+@using IMTrainingAttendance.Models
+@using IMTrainingAttendance.Services.TrainerServices
+@inject ApplicationContext context
+@inject IJSRuntime JsRuntime
 
-<h3>Trainers</h3>
+<h3>Instructores</h3>
+
+<hr />
+<label for="fname">Nombre</label>
+<InputText id="fname" DisplayName="Nombre" @bind-Value="newTrainer.Name"></InputText>
+
+<label for="femail">Email</label>
+<InputText id="femail" @bind-Value="newTrainer.Email"></InputText>
+
+<label for="fcelular">Celular</label>
+<InputText id="fcelular" @bind-Value="newTrainer.Cellphone"></InputText>
+
+<button @onclick="CreateTrainer">Agregar</button>
 
 <hr />
 
+<label for="fname">Nombre</label>
+<InputText id="fname" DisplayName="Nombre" @bind-Value="updtdTrainer.Name"></InputText>
 
+<label for="femail">Email</label>
+<InputText id="femail" @bind-Value="updtdTrainer.Email"></InputText>
+
+<label for="fcelular">Celular</label>
+<InputText id="fcelular" @bind-Value="updtdTrainer.Cellphone"></InputText>
+
+<button @onclick="UpdateTrainerAtDb">Agregar</button>
+
+<hr />
+
+@if (trainers is null)
+{
+    <p>Descargando</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Nombre</th>
+                <th>Email</th>
+                <th>Celular</th>
+                <th>Acción</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in trainers)
+            {
+                <tr>
+                    <td>@item.Id</td>
+                    <td>@item.Name</td>
+                    <td>@item.Email</td>
+                    <td>@item.Cellphone</td>
+                    <td><button @onclick="() => InitializeUpdateTrainerObj(item.Id)">Modificar</button></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
 
 @code {
+    private ApplicationContext _context;
+
+    private Trainer[]? trainers;
+
+    private Trainer newTrainer = new();
+
+    private Trainer updtdTrainer = new();
+
+    private async Task CreateTrainer()
+    {
+        try
+        {
+            var addNewTrainer = new AddNewTrainer(_context);
+            await addNewTrainer.Handler(newTrainer);
+            await GetTrainersFromDb();
+            await JsRuntime.InvokeVoidAsync("alert", "Instructor creado.");
+        }
+        catch (Exception ex)
+        {
+            await JsRuntime.InvokeVoidAsync("alert", ex.Message);
+        }
+
+    }
+
+    private async Task InitializeUpdateTrainerObj(int Id)
+    {
+        updtdTrainer.Id = Id;
+        updtdTrainer.Name = trainers.Where(s => s.Id == Id).FirstOrDefault().Name;
+        updtdTrainer.Email = trainers.Where(s => s.Id == Id).FirstOrDefault().Email;
+        updtdTrainer.Cellphone = trainers.Where(s => s.Id == Id).FirstOrDefault().Cellphone;
+    }
+
+    private async Task UpdateTrainerAtDb()
+    {
+        try
+        {
+            if (!(updtdTrainer.Id > 0)) 
+                await JsRuntime.InvokeVoidAsync("alert", "Seleccione el instructor a modificar.");
+
+            var updateTrainer = new UpdateTrainer(_context);
+            await updateTrainer.Handler(updtdTrainer.Id, updtdTrainer);
+
+            await GetTrainersFromDb();
+        }
+        catch (Exception ex)
+        {
+            await JsRuntime.InvokeVoidAsync("alert", ex.Message);
+        }
+    }
+
+    private async Task GetTrainersFromDb()
+    {
+        var getTrainerList = new GetTrainerList(_context);
+        var query = await getTrainerList.Handler();
+        trainers = query.ToArray();
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        _context = context;
+        await GetTrainersFromDb();
+    }
 
 }

@@ -5,6 +5,10 @@ namespace IMTrainingAttendance.Context;
 
 public class ApplicationContext : DbContext
 {
+    public ApplicationContext(DbContextOptions<ApplicationContext> options) : base(options)
+    {
+            
+    }
     public DbSet<Trainer> Trainers { get; set; }
     public DbSet<Training> Trainings { get; set; }
     public DbSet<Employee> Employees { get; set; }
